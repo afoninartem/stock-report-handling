@@ -1,0 +1,86 @@
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+body {
+  font-size: 18px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 30px;
+}
+
+label, p {
+  margin-bottom: 5px;
+  font-size: 20px;
+}
+
+input {
+  margin-bottom: 20px;
+}
+
+.button {
+  flex: 1 1 auto;
+  padding: 16px 32px;
+}
+
+.hidden__button {
+  display: none;
+}
+
+.print-block {
+  display: none;
+  border: 0.5px solid black;
+  grid-template-columns: max-content 1fr 1fr;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  background: rgba(230, 224, 224, 0.753);
+  padding: 15px;
+  border: 0.5px solid black;
+  text-align: center;
+}
+
+.title:nth-last-child(-n+2) {
+  text-align: right;
+}
+
+.shop-name, .quantity {
+  padding: 10px;
+  border: 0.5px solid black;
+}
+
+.quantity {
+  text-align: right;
+}
+
+@media print {
+  body {
+    visibility: hidden;
+  }
+  .print-block, .print-block * {
+    visibility: visible;
+  }
+  .print-block {
+    position: absolute;
+    top: 50px;
+  }
+}
