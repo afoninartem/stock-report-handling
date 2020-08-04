@@ -2,6 +2,7 @@ const shops = JSON.parse(localStorage.getItem('lastShopsInfoForStockReportHandli
 const handleReports = [];
 const topShops = ["А21_ТЦ Ленинская Слобода (Roomer)", "А21_ТЦ Ленинская Слобода 3 (Roomer)", "А21_Кронштадтский б-р", "А21_ТЦ Империя"]
 let shopsReports;
+const tableRows = [];
 
 
 //getting shop name for check
@@ -56,6 +57,18 @@ const outputInfo = (correctDate) => {
 
 outputInfo(getLastInfo());
 
+const comma2Dot = (num) => {
+  const str = num + '';
+  let result;
+  if (str.includes(',')) {
+    result = str.replace(/,/, '.');
+    // console.log(`result:${result}`)
+    return +result;
+  }
+  // console.log(`num:${num}`)
+  return num;
+}
+
 //handle stock reports data making an object for each shop
 const getShopData = (rows, col) => {
   const materials = [`vip`, `vipPack`, `cup`, `cupPack`, `vine`, `chocoSet`, `chest`, `choco5`, `candy`, `leaflet`, `green`, `gray`, `stick`, `clamp`];
@@ -88,15 +101,15 @@ document.querySelector('#commonReport').onchange = function () {
       handleReports.push(getShopData(rows, i));
     });
     shopsReports = handleReports.filter(el => el.name.includes('_'))
-    console.log(shopsReports)
     shopsReports.forEach((report, i) => calcShipment(report, i));
+    // console.log(shopsReports)
   }
   reader.readAsText(file, 'windows-1251');
 }
 
 const choco5Helper = (obj) => {
-  let foreChoco5 = obj.forecast.choco5;
-  let consChoco5 = obj.consumption.choco5;
+  let foreChoco5 = comma2Dot(obj.forecast.choco5);
+  let consChoco5 = comma2Dot(obj.consumption.choco5);
   if (+foreChoco5 < 10) foreChoco5 *= 250;
   if (+consChoco5 < 10) foreChoco5 *= 250;
   if (foreChoco5 % 250) {
@@ -107,16 +120,36 @@ const choco5Helper = (obj) => {
     consChoco5 = Math.floor(consChoco5 / 250 < 1 ? 1 : consChoco5 / 250) * 250;
     // console.log(`${obj.name} - consChoco5:${consChoco5}`);
   }
-  return Math.min(consChoco5, foreChoco5);
+  return Math.min(consChoco5, (foreChoco5));
 }
 
-// const candyHelper = (obj) => {
-//   if ()
-// }
+const candyHelper = (obj) => {
+  let divider;
+  if (obj.forecast.candy > 1) {
+    switch (obj.forecast.candy.toString().length) {
+      case 2:
+        divider = 10;
+        break;
+      case 3:
+        divider = 1000;
+        break;
+      case 4:
+        divider = 1000;
+        break;
+      default:
+        divider = 1;
+    }
+  } else {
+    return obj.forecast.candy.toString().replace('.', ',');
+  }
+  let candy = obj.forecast.candy / divider;
+  return candy - obj.consumption.candy > 3 ?  (candy + 1).toString().replace('.', ',') : candy.toString().replace('.', ',');
+}
 
 //calc of material shipment
 const calcShipment = (obj, i) => {
   if (topShops.some(el => el === obj.name)) {
+    const poster = obj.forecast.poster;
     const vip = obj.leftover.vip < 20 ? 20 - obj.leftover.vip : 0;
     const vipPack = obj.leftover.vipPack < 20 ? 20 - obj.leftover.vipPack : 0;
     const cup = obj.forecast.cup;
@@ -129,8 +162,15 @@ const calcShipment = (obj, i) => {
       obj.forecast.choco5 *= 250 : obj.forecast.choco5 % 250 ?
         Math.ceil(obj.forecast.choco5 / 250) * 250 : obj.forecast.choco5;
     const candy = candyHelper(obj);
-    console.log(`${obj.name}, i:${i}, vip:${vip}, vipPack:${vipPack}, cup:${cup}, cupPack:${cupPack}, vine:${vine}, chocoSet:${chocoSet}, choco5:${choco5}`);
+    const leaflet = obj.forecast.leaflet;
+    const green = obj.forecast.green;
+    const gray = obj.forecast.gray;
+    const clamp = obj.forecast.clamp;
+    const stick = obj.forecast.stick;
+    console.log(`${obj.name}, i:${i}, vip:${vip}, vipPack:${vipPack}, cup:${cup}, cupPack:${cupPack}, vine:${vine}, chocoSet:${chocoSet}, choco5:${choco5}, candy:${candy}, green:${green}, gray:${gray}`);
+    return tableRows.push(`${+i + 1};${obj.name};${poster};${vip};${vipPack};${cup};${cupPack};${vine};${chocoSet};${chest};${choco5};${candy};${leaflet};${green};${gray};${clamp};${stick}`);
   } else {
+    const poster = obj.forecast.poster;
     const vip = obj.leftover.vip < 10 ? 10 - obj.leftover.vip : 0;
     const vipPack = obj.leftover.vipPack < 10 ? 10 - obj.leftover.vipPack : 0;
     const cup = obj.forecast.cup - obj.consumption.cup < 0 ?
@@ -146,11 +186,30 @@ const calcShipment = (obj, i) => {
       obj.consumption.chocoSet : obj.forecast.chocoSet;
     const chest = obj.forecast.chest;
     const choco5 = choco5Helper(obj);
-    console.log(`${obj.name}, i:${i}, vip:${vip}, vipPack:${vipPack}, cup:${cup}, cupPack:${cupPack}, vine:${vine}, chocoSet:${chocoSet}, choco5:${choco5}`);
+    const candy = candyHelper(obj);
+    const leaflet = obj.forecast.leaflet;
+    const green = obj.leftover.green >= 40 ? 0 : obj.forecast.green;
+    const gray = obj.leftover.gray >= 40 ? 0 : obj.forecast.gray;
+    const clamp = obj.leftover.clamp >= 80 ? 0 : obj.forecast.clamp;
+    const stick = obj.leftover.stick >= 80 ? 0 : obj.forecast.stick;
+    console.log(`${obj.name}, i:${i}, vip:${vip}, vipPack:${vipPack}, cup:${cup}, cupPack:${cupPack}, vine:${vine}, chocoSet:${chocoSet}, choco5:${choco5}, candy:${candy}, green:${green}, gray:${gray}`);
+    return tableRows.push(`${+i + 1};${obj.name};${poster};${vip};${vipPack};${cup};${cupPack};${vine};${chocoSet};${chest};${choco5};${candy};${leaflet};${green};${gray};${clamp};${stick}`);
   }
-  // console.log(obj.name, i, vip);
-}
-//final row for result table 
-const createRow = (obj) => {
 
+}
+//final row for result table - don't need it
+
+//"\uFEFF" + 
+document.getElementById('download').onclick = function () {
+  let csv = `№;Салон;Плакат;VIP;Пакет;Кружка;Упаковка;Шампанское;Шок. Наб.;Развертка;Шоколад 5гр;Леденец;Листовка;Зеленый;Серый;Зажим;Палочка\n`;
+  tableRows.forEach((elem, i) => {
+    // csv += i + 1;
+    csv += elem;
+    csv += `\n`;
+  });
+  var hiddenElement = document.createElement('a');
+  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI("\uFEFF" + csv);
+  hiddenElement.target = '_blank';
+  hiddenElement.download = 'Отгрузочная таблица.csv';
+  hiddenElement.click();
 }
