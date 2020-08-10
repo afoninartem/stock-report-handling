@@ -45,7 +45,8 @@ document.getElementById('shops').onchange = function () {
       let shop = salon[0];
       if (shop.includes('_')) {
         const res = shop.split('"').join('');
-        shops.push(res);
+        const final = res.replace('  ', ' ');
+        shops.push(final);
       };
     });
     localStorage.setItem(`lastShopsInfoForStockReportHandling`, JSON.stringify(shops));
@@ -93,7 +94,7 @@ const comma2Dot = (num) => {
 
 //handle stock reports data making an object for each shop
 const getShopData = (rows, col) => {
-  const name = checkShopName(rows[1][col]);
+  const name = checkShopName(rows[1][col]).replace('  ', ' ');
   const region = rows[49][col];
   const status = rows[50][col];
   const consumption = {};
@@ -126,8 +127,16 @@ document.querySelector('#commonReport').onchange = function () {
       handleReports.push(getShopData(rows, i));
     });
     shopsReports = handleReports.filter(el => el.name.includes('_'));
-    reportsMoscow = shopsReports.filter(el => el.region === 'Moscow');
-    reportsRegion = shopsReports.filter(el => el.region !== 'Moscow');
+    //сортировка согласно порядку массива shops:
+    const sortedShopReports = [];
+    shops.forEach(shop => {
+      shopsReports.forEach(report => {
+        if (report.name === shop) sortedShopReports.push(report);
+      })
+    });
+    // console.log(sortedShopReports);
+    reportsMoscow = sortedShopReports.filter(el => el.region === 'Moscow');
+    reportsRegion = sortedShopReports.filter(el => el.region !== 'Moscow');
     // console.log(shopsReports);
     // console.log(reportsMoscow);
     // console.log(reportsRegion);
@@ -295,9 +304,6 @@ const total = (arr) => {
 //"\uFEFF" + 
 document.getElementById('download').onclick = function () {
   let csv = `№;Салон;Плакат;VIP;Пакет;Кружка;Упаковка;Шампанское;Шок. Наб.;Развертка;Шоколад 5гр;Леденец;Листовка;Зеленый;Серый;Зажим;Палочка\n`;
-  shopsMoscow.sort();
-  shopsRegion.sort();
-  // sortShops(shopsReports, shops);
   shopsMoscow.forEach((shop, i) => {
     csv += `${+i + 1};`;
     csv += shop;
