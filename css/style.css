@@ -1,13 +1,16 @@
 html {
   box-sizing: border-box;
 }
-*, *:before, *:after {
+*,
+*:before,
+*:after {
   box-sizing: inherit;
 }
 
 body {
   font-size: 18px;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
+  --main-gray-color: rgba(230, 224, 224, 0.753);
 }
 
 .wrapper {
@@ -25,7 +28,8 @@ form {
   margin-bottom: 30px;
 }
 
-label, p {
+label,
+p {
   margin-bottom: 5px;
   font-size: 20px;
 }
@@ -37,6 +41,7 @@ input {
 .button {
   flex: 1 1 auto;
   padding: 16px 32px;
+  margin-bottom: 20px;
 }
 
 .hidden__button {
@@ -44,22 +49,61 @@ input {
 }
 
 .print-block {
+  width: auto;
+  /* display: none; */
+  flex-direction: column;
+}
+
+.table {
   display: none;
+  width: auto;
   border: 0.5px solid black;
-  grid-template-columns: max-content 1fr 1fr;
+  /* grid-template-columns: repeat(17, max-content); */
+  grid-template-columns: max-content max-content repeat(15, minmax(60px, auto));
   margin-bottom: 20px;
 }
 
-.title {
-  font-size: 20px;
+.cell {
+  border: 0.5px solid black;
+  padding: 5px;
+  font-size: 18px;
+  text-align: center;
+}
+
+.vip {
+  background: #ffff7379;
+}
+
+.cup,
+.cupPack {
+  background: #9cef6c79;
+}
+
+.summary {
+  border: 0.5px solid black;
+  background: var(--main-gray-color);
   font-weight: bold;
-  background: rgba(230, 224, 224, 0.753);
-  padding: 15px;
+}
+
+.num {
+  text-align: right;
+  background: var(--main-gray-color);
+}
+
+.shop-name {
+  background: var(--main-gray-color);
+}
+
+.table-header {
+  font-size: 11px;
+  font-weight: bold;
+  background: var(--main-gray-color);
+  padding: 5px 0;
   border: 0.5px solid black;
   text-align: center;
 }
 
-.title:nth-last-child(-n+2) {
+/* .title:nth-last-child(-n+2) {
   text-align: right;
 }
 
@@ -70,13 +114,20 @@ input {
 
 .quantity {
   text-align: right;
-}
+} */
 
 @media print {
   body {
     visibility: hidden;
   }
-  .print-block, .print-block * {
+  * {
+    -webkit-print-color-adjust: exact;
+  }
+  .cell {
+    font-size: 18px;
+  }
+  .print-block,
+  .print-block * {
     visibility: visible;
   }
   .print-block {

@@ -1,3 +1,4 @@
+const tableHeader = `№;Салон;Плакат;VIP;Пакет;Кружка;Упак;Вино;Набор;Развертка;5гр;Леденец;Листовка;Зеленый;Серый;Зажим;Палочка`;
 const materials = [`vip`, `vipPack`, `cup`, `cupPack`, `vine`, `chocoSet`, `chest`, `choco5`, `candy`, `leaflet`, `green`, `gray`, `stick`, `clamp`];
 const shops = JSON.parse(localStorage.getItem('lastShopsInfoForStockReportHandling')) || [];
 const handleReports = [];
@@ -14,6 +15,83 @@ const shopsMoscowForCalc = [];
 const shopsRegionForCalc = [];
 //TOTAL SUMMS
 const tT = {};
+const tTP = {};
+const table = document.querySelector('.table');
+
+const sum2Print = (arr) => {
+  const summs = {};
+  const mats = Array.from(materials);
+  mats.push(`poster`);
+  mats.forEach(mat => summs[mat] = 0);
+  arr.forEach(shop => {
+    for (material in summs) {
+      summs[material] += +shop[material].toString().replace(',', '.');
+    }
+  })
+  for (elem in summs) {
+    tTP[elem] === undefined ? tTP[elem] = summs[elem] : tTP[elem] += summs[elem];
+  }
+  const res = `;ИТОГО;${summs.poster};${summs.vip};${summs.vipPack};${summs.cup};${summs.cupPack};${summs.vine};${summs.chocoSet};${summs.chest};${summs.choco5};${summs.candy.toString().replace('.', ',')};${summs.leaflet.toString().replace('.', ',')};${summs.green};${summs.gray};${summs.clamp};${summs.stick}`;
+  return res.split(';').forEach((el, i) => {
+    const sum = document.createElement('div');
+    sum.classList.add('summary');
+    sum.textContent = el;
+    table.appendChild(sum);
+  });
+}
+
+const printTotal = (tTP) => {
+  const res = `;ИТОГО ВСЕГО;${tTP.poster};${tTP.vip};${tTP.vipPack};${tTP.cup};${tTP.cupPack};${tTP.vine};${tTP.chocoSet};${tTP.chest};${tTP.choco5};${tTP.candy.toString().replace('.', ',')};${tTP.leaflet.toString().replace('.', ',')};${tTP.green};${tTP.gray};${tTP.clamp};${tTP.stick}`;
+  return res.split(';').forEach((el, i) => {
+    const sum = document.createElement('div');
+    sum.classList.add('summary');
+    sum.textContent = el;
+    table.appendChild(sum);
+  });
+}
+
+const array2Print = (arr) => {
+  return arr.forEach((shop, i) => {
+    const num = document.createElement('div');
+    num.classList.add('num');
+    num.textContent = +i + 1;
+    table.appendChild(num);
+
+    const name = document.createElement('div');
+    name.classList.add('shop-name');
+    name.textContent = shop.name;
+    table.appendChild(name);
+
+    const poster = document.createElement('div');
+    poster.classList.add('poster');
+    poster.textContent = shop.poster;
+    table.appendChild(poster);
+
+    materials.forEach(mat => {
+      const newCell = document.createElement('div');
+      newCell.classList.add(mat);
+      newCell.textContent = shop[mat];
+      table.appendChild(newCell);
+    });
+  })
+}
+
+const tableDraw = () => {
+  table.style.display = 'grid';
+  document.querySelector('.hidden__button').style.display = `flex`;
+  tableHeader.split(';').forEach(el => {
+    const tableHeaderCell = document.createElement('div');
+    tableHeaderCell.classList.add('table-header');
+    tableHeaderCell.textContent = el;
+    table.appendChild(tableHeaderCell);
+  });
+  array2Print(shopsMoscowForCalc);
+  sum2Print(shopsMoscowForCalc);
+  array2Print(shopsRegionForCalc);
+  sum2Print(shopsRegionForCalc);
+  printTotal(tTP);
+  table.childNodes.forEach(cell => cell.classList.add(`cell`));
+}
 
 
 //getting shop name for check
@@ -24,14 +102,6 @@ const checkShopName = (name) => {
   });
   return name.split('"').join('');
 }
-
-// const sortShops = (shopsReports, shops) => { 
-//   const itemsByIndex = new Map(shops.map((shop, index) => [shop, index]));
-//   console.log(itemsByIndex);
-//   return shopsReports.forEach((report, i) => {
-//     if (report.name === itemsByIndex.key) i = itemsByIndex.value;
-//   })
-// }
 
 //upload actual shop list
 document.getElementById('shops').onchange = function () {
@@ -127,21 +197,19 @@ document.querySelector('#commonReport').onchange = function () {
       handleReports.push(getShopData(rows, i));
     });
     shopsReports = handleReports.filter(el => el.name.includes('_'));
-    //сортировка согласно порядку массива shops:
+    //sorting according to shops array:
     const sortedShopReports = [];
     shops.forEach(shop => {
       shopsReports.forEach(report => {
         if (report.name === shop) sortedShopReports.push(report);
       })
     });
-    // console.log(sortedShopReports);
     reportsMoscow = sortedShopReports.filter(el => el.region === 'Moscow');
     reportsRegion = sortedShopReports.filter(el => el.region !== 'Moscow');
-    // console.log(shopsReports);
-    // console.log(reportsMoscow);
-    // console.log(reportsRegion);
     reportsMoscow.forEach((report, i) => calcShipment(report, i));
     reportsRegion.forEach((report, i) => calcShipment(report, i));
+    //going to add to these loops call of a function fo table draw
+    tableDraw();
   }
   reader.readAsText(file, 'windows-1251');
 }
@@ -191,7 +259,7 @@ const getLeaflets = (leaflet) => {
 }
 
 //calc of material shipment
-const calcShipment = (obj, i) => {
+const calcShipment = (obj) => {
   if (obj.status === 'top') {
     const poster = obj.forecast.poster;
     const vip = obj.leftover.vip < 20 ? 20 - obj.leftover.vip : 0;
@@ -213,7 +281,8 @@ const calcShipment = (obj, i) => {
     const stick = obj.forecast.stick;
     //getting an object with final data and add it to an appropriate array
     const dataForCalc = {};
-    dataForCalc.poster = obj.forecast.poster;
+    dataForCalc.region = obj.region;
+    dataForCalc.poster = poster;
     dataForCalc.name = obj.name;
     dataForCalc.vip = vip;
     dataForCalc.vipPack = vipPack;
@@ -233,7 +302,6 @@ const calcShipment = (obj, i) => {
     //
     const result = `${obj.name};${poster};${vip};${vipPack};${cup};${cupPack};${vine};${chocoSet};${chest};${choco5};${candy};${leaflet};${green};${gray};${clamp};${stick}`;
     return obj.region === 'Moscow' ? shopsMoscow.push(result) : shopsRegion.push(result);
-    // return tableRows.push(`${+i + 1};${obj.name};${poster};${vip};${vipPack};${cup};${cupPack};${vine};${chocoSet};${chest};${choco5};${candy};${leaflet};${green};${gray};${clamp};${stick}`);
   } else {
     const poster = obj.forecast.poster;
     const vip = obj.leftover.vip > 9 ? 0 : 10 - obj.leftover.vip;
@@ -259,7 +327,8 @@ const calcShipment = (obj, i) => {
     const stick = obj.leftover.stick >= 80 ? 0 : obj.forecast.stick;
     //getting an object with final data and add it to an appropriate array
     const dataForCalc = {};
-    dataForCalc.poster = obj.forecast.poster;
+    dataForCalc.region = obj.region;
+    dataForCalc.poster = poster;
     dataForCalc.name = obj.name;
     dataForCalc.vip = vip;
     dataForCalc.vipPack = vipPack;
@@ -279,8 +348,6 @@ const calcShipment = (obj, i) => {
     //
     const result = `${obj.name};${poster};${vip};${vipPack};${cup};${cupPack};${vine};${chocoSet};${chest};${choco5};${candy};${leaflet};${green};${gray};${clamp};${stick}`;
     return obj.region === 'Moscow' ? shopsMoscow.push(result) : shopsRegion.push(result);
-    // console.log(`${obj.name}, i:${i}, vip:${vip}, vipPack:${vipPack}, cup:${cup}, cupPack:${cupPack}, vine:${vine}, chocoSet:${chocoSet}, choco5:${choco5}, candy:${candy}, green:${green}, gray:${gray}`);
-    // return tableRows.push(`${+i + 1};${obj.name};${poster};${vip};${vipPack};${cup};${cupPack};${vine};${chocoSet};${chest};${choco5};${candy};${leaflet};${green};${gray};${clamp};${stick}`);
   }
 }
 
@@ -289,21 +356,20 @@ const total = (arr) => {
   materials.push('poster');
   materials.forEach(mat => summs[mat] = 0);
   arr.forEach(shop => {
-    // console.log(`${shop.name} candy: ${shop.candy}, type: ${typeof shop.candy}`);
     for (material in summs) {
       summs[material] += +shop[material].toString().replace(',', '.');
     }
   })
-  // console.log(summs);
   for (elem in summs) {
     tT[elem] === undefined ? tT[elem] = summs[elem] : tT[elem] += summs[elem];
   }
   return `;ИТОГО;${summs.poster};${summs.vip};${summs.vipPack};${summs.cup};${summs.cupPack};${summs.vine};${summs.chocoSet};${summs.chest};${summs.choco5};${summs.candy.toString().replace('.', ',')};${summs.leaflet.toString().replace('.', ',')};${summs.green};${summs.gray};${summs.clamp};${summs.stick}`;
 }
 
-//"\uFEFF" + 
 document.getElementById('download').onclick = function () {
-  let csv = `№;Салон;Плакат;VIP;Пакет;Кружка;Упаковка;Шампанское;Шок. Наб.;Развертка;Шоколад 5гр;Леденец;Листовка;Зеленый;Серый;Зажим;Палочка\n`;
+  // let csv = `№;Салон;Плакат;VIP;Пакет;Кружка;Упаковка;Шампанское;Шок. Наб.;Развертка;Шоколад 5гр;Леденец;Листовка;Зеленый;Серый;Зажим;Палочка\n`;
+  let csv = tableHeader;
+  csv += `\n`;
   shopsMoscow.forEach((shop, i) => {
     csv += `${+i + 1};`;
     csv += shop;
@@ -329,4 +395,8 @@ document.getElementById('download').onclick = function () {
   hiddenElement.target = '_blank';
   hiddenElement.download = 'Отгрузочная таблица.csv';
   hiddenElement.click();
+}
+
+const tablePrint = () => {
+  window.print();
 }
